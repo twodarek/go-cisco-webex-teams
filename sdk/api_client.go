@@ -1,6 +1,7 @@
 package webexteams
 
 import (
+	"net/http"
 	"os"
 
 	"github.com/go-resty/resty/v2"
@@ -41,6 +42,16 @@ func (s *Client) SetAuthToken(accessToken string) {
 	RestyClient.SetAuthToken(accessToken)
 }
 
+// SetRetryCount enables retries and allows up to 5 retries in each request
+func (s *Client) SetRetryCount(count int) {
+	RestyClient.SetRetryCount(count)
+}
+
+// SetRetryCount enables retries and allows up to 5 retries in each request
+func (s *Client) AddRetryCondition(conditionFunc resty.RetryConditionFunc) {
+	RestyClient.AddRetryCondition(conditionFunc)
+}
+
 // NewClient creates a new API client. Requires a userAgent string describing your application.
 // optionally a custom http.Client to allow for advanced features such as caching.
 func NewClient() *Client {
@@ -51,6 +62,12 @@ func NewClient() *Client {
 	if os.Getenv("WEBEX_TEAMS_ACCESS_TOKEN") != "" {
 		RestyClient.SetAuthToken(os.Getenv("WEBEX_TEAMS_ACCESS_TOKEN"))
 	}
+	RestyClient.AddRetryCondition(
+		func(r *resty.Response, err error) bool {
+			return r.StatusCode() == http.StatusTooManyRequests
+		},
+	)
+	RestyClient.SetRetryCount(5)
 
 	// API Services
 	c.Contents = (*ContentsService)(&c.common)
