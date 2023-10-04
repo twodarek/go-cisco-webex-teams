@@ -8,7 +8,6 @@ import (
 )
 
 // RestyClient is the REST Client
-var RestyClient *resty.Client
 
 const apiURL = "https://webexapis.com/v1"
 
@@ -18,28 +17,31 @@ type Client struct {
 	common service // Reuse a single struct instead of allocating one for each service on the heap.
 
 	// API Services
-	Contents        *ContentsService
-	Devices         *DevicesService
-	Licenses        *LicensesService
-	Memberships     *MembershipsService
-	Messages        *MessagesService
-	Organizations   *OrganizationsService
-	People          *PeopleService
-	Recordings      *RecordingsService
-	Roles           *RolesService
-	Rooms           *RoomsService
-	TeamMemberships *TeamMembershipsService
-	Teams           *TeamsService
-	Webhooks        *WebhooksService
+	AdminAuditEvents  *AdminAuditEventsService
+	AttachmentActions *AttachmentActionsService
+	Contents          *ContentsService
+	Events            *EventsService
+	Devices           *DevicesService
+	Licenses          *LicensesService
+	Memberships       *MembershipsService
+	Messages          *MessagesService
+	Organizations     *OrganizationsService
+	People            *PeopleService
+	Recordings        *RecordingsService
+	Roles             *RolesService
+	Rooms             *RoomsService
+	TeamMemberships   *TeamMembershipsService
+	Teams             *TeamsService
+	Webhooks          *WebhooksService
 }
 
 type service struct {
-	client *Client
+	client *resty.Client
 }
 
 // SetAuthToken defines the Authorization token sent in the request
 func (s *Client) SetAuthToken(accessToken string) {
-	RestyClient.SetAuthToken(accessToken)
+	s.common.client.SetAuthToken(accessToken)
 }
 
 // SetRetryCount enables retries and allows up to 5 retries in each request
@@ -57,10 +59,10 @@ func (s *Client) AddRetryCondition(conditionFunc resty.RetryConditionFunc) {
 func NewClient() *Client {
 	client := resty.New()
 	c := &Client{}
-	RestyClient = client
-	RestyClient.SetHostURL(apiURL)
+	c.common.client = client
+	c.common.client.SetHostURL(apiURL)
 	if os.Getenv("WEBEX_TEAMS_ACCESS_TOKEN") != "" {
-		RestyClient.SetAuthToken(os.Getenv("WEBEX_TEAMS_ACCESS_TOKEN"))
+		c.common.client.SetAuthToken(os.Getenv("WEBEX_TEAMS_ACCESS_TOKEN"))
 	}
 	RestyClient.AddRetryCondition(
 		func(r *resty.Response, err error) bool {
@@ -70,7 +72,10 @@ func NewClient() *Client {
 	RestyClient.SetRetryCount(5)
 
 	// API Services
+	c.AdminAuditEvents = (*AdminAuditEventsService)(&c.common)
+	c.AttachmentActions = (*AttachmentActionsService)(&c.common)
 	c.Contents = (*ContentsService)(&c.common)
+	c.Events = (*EventsService)(&c.common)
 	c.Devices = (*DevicesService)(&c.common)
 	c.Licenses = (*LicensesService)(&c.common)
 	c.Memberships = (*MembershipsService)(&c.common)
