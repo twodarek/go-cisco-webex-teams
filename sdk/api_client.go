@@ -46,12 +46,12 @@ func (s *Client) SetAuthToken(accessToken string) {
 
 // SetRetryCount enables retries and allows up to 5 retries in each request
 func (s *Client) SetRetryCount(count int) {
-	RestyClient.SetRetryCount(count)
+	s.common.client.SetRetryCount(count)
 }
 
 // SetRetryCount enables retries and allows up to 5 retries in each request
 func (s *Client) AddRetryCondition(conditionFunc resty.RetryConditionFunc) {
-	RestyClient.AddRetryCondition(conditionFunc)
+	s.common.client.AddRetryCondition(conditionFunc)
 }
 
 // NewClient creates a new API client. Requires a userAgent string describing your application.
@@ -64,12 +64,12 @@ func NewClient() *Client {
 	if os.Getenv("WEBEX_TEAMS_ACCESS_TOKEN") != "" {
 		c.common.client.SetAuthToken(os.Getenv("WEBEX_TEAMS_ACCESS_TOKEN"))
 	}
-	RestyClient.AddRetryCondition(
+	c.common.client.AddRetryCondition(
 		func(r *resty.Response, err error) bool {
 			return r.StatusCode() == http.StatusTooManyRequests
 		},
 	)
-	RestyClient.SetRetryCount(5)
+	c.common.client.SetRetryCount(5)
 
 	// API Services
 	c.AdminAuditEvents = (*AdminAuditEventsService)(&c.common)
